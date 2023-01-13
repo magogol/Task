@@ -1,3 +1,8 @@
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -5,12 +10,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 public class GUI extends JFrame{
     private JButton button1 = new JButton("Txt");
     private JButton button2 = new JButton("Xml");
     private JButton button3 = new JButton("Json");
-    // private JButton zipButton = new JButton("Zipping");
     private JLabel label = new JLabel("Input name of file: ");
     private JTextField input = new JTextField("", 7);
 
@@ -36,7 +44,7 @@ public class GUI extends JFrame{
         container.add(button3);
     }
     class Button1EventListener implements ActionListener {
-        private String[] file = {"Zip"};
+        private String[] file = {"Zip", "Encrypt"};
         private ImageIcon icon = null;
         public void actionPerformed (ActionEvent e){
             String mess = "The content of output txt file:\n\n";
@@ -64,19 +72,35 @@ public class GUI extends JFrame{
                     case "Zip":
                         FileData.Zip(input.getText() + ".txt", "compressedTxt.zip");
                         JOptionPane.showMessageDialog(null, "file was zipped");
-                        Object o = JOptionPane.showConfirmDialog(null,"Unzip file?", "unzip?", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, icon);
+                        Object o = JOptionPane.showConfirmDialog(null,"Unzip file?", "unzip?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
                         System.out.println(o);
                         if(o.toString().matches("0"))
                             FileData.UnZip("compressedTxt.zip", "unzip.txt");
                         break;
+                    case "Encrypt":
+                        SecretKey key = FileData.generateKey(128);
+                        String algorithm = "AES/CBC/PKCS5Padding";
+                        IvParameterSpec ivParameterSpec = FileData.generateIv();
+                        File inputFile = Paths.get(input.getText() + ".txt").toFile();
+                        File encryptedFile = new File("inTxt.encrypted");
+                        File decryptedFile = new File("inTxt.decrypted");
+                        FileData.encryptFile(algorithm, key, ivParameterSpec, inputFile, encryptedFile);
+                        JOptionPane.showMessageDialog(null, "file was encrypted");
+                        Object o2 = JOptionPane.showConfirmDialog(null,"Decrypt file?", "decrypt?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
+                        System.out.println(o2);
+                        if(o2.toString().matches("0"))
+                            FileData.decryptFile(algorithm, key, ivParameterSpec, encryptedFile, decryptedFile);
+                        break;
                 }
-            } catch(IOException ex) {
+            } catch(IOException | NoSuchAlgorithmException | NoSuchPaddingException |
+                    InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException |
+                    IllegalBlockSizeException ex) {
                 System.out.println("Error: " + ex);
             }
         }
     }
     class Button2EventListener implements ActionListener {
-        private String[] file = {"Zip"};
+        private String[] file = {"Zip", "Encrypt"};
         private ImageIcon icon = null;
         public void actionPerformed (ActionEvent e){
             String mess = "The content of output xml file:\n\n";
@@ -103,18 +127,34 @@ public class GUI extends JFrame{
                     case "Zip":
                         FileData.Zip(input.getText() + ".xml", "compressedXml.zip");
                         JOptionPane.showMessageDialog(null, "file was zipped");
-                        Object o = JOptionPane.showConfirmDialog(null,"Unzip file?", "unzip?", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, icon);
+                        Object o = JOptionPane.showConfirmDialog(null,"Unzip file?", "unzip?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
                         if(o.toString().matches("0"))
                             FileData.UnZip("compressedXml.zip", "unzip.xml");
                         break;
+                    case "Encrypt":
+                        SecretKey key = FileData.generateKey(128);
+                        String algorithm = "AES/CBC/PKCS5Padding";
+                        IvParameterSpec ivParameterSpec = FileData.generateIv();
+                        File inputFile = Paths.get(input.getText() + ".xml").toFile();
+                        File encryptedFile = new File("inXml.encrypted");
+                        File decryptedFile = new File("inXml.decrypted");
+                        FileData.encryptFile(algorithm, key, ivParameterSpec, inputFile, encryptedFile);
+                        JOptionPane.showMessageDialog(null, "file was encrypted");
+                        Object o2 = JOptionPane.showConfirmDialog(null,"Decrypt file?", "decrypt?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
+                        System.out.println(o2);
+                        if(o2.toString().matches("0"))
+                            FileData.decryptFile(algorithm, key, ivParameterSpec, encryptedFile, decryptedFile);
+                        break;
                 }
-            } catch(IOException ex) {
+            } catch(IOException | NoSuchAlgorithmException | NoSuchPaddingException |
+                    InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException |
+                    IllegalBlockSizeException ex) {
                 System.out.println("Error: " + ex);
             }
         }
     }
     class Button3EventListener implements ActionListener {
-        private String[] file = {"Zip"};
+        private String[] file = {"Zip", "Encrypt"};
         private ImageIcon icon = null;
         public void actionPerformed (ActionEvent e){
             String mess = "The content of output json file:\n\n";
@@ -142,12 +182,28 @@ public class GUI extends JFrame{
                     case "Zip":
                         FileData.Zip(input.getText() + ".json", "compressedJson.zip");
                         JOptionPane.showMessageDialog(null, "file was zipped");
-                        Object o = JOptionPane.showConfirmDialog(null,"Unzip file?", "unzip?", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, icon);
+                        Object o = JOptionPane.showConfirmDialog(null,"Unzip file?", "unzip?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
                         if(o.toString().matches("0"))
                             FileData.UnZip("compressedJson.zip", "unzip.json");
                         break;
+                    case "Encrypt":
+                        SecretKey key = FileData.generateKey(128);
+                        String algorithm = "AES/CBC/PKCS5Padding";
+                        IvParameterSpec ivParameterSpec = FileData.generateIv();
+                        File inputFile = Paths.get(input.getText() + ".json").toFile();
+                        File encryptedFile = new File("inJson.encrypted");
+                        File decryptedFile = new File("inJson.decrypted");
+                        FileData.encryptFile(algorithm, key, ivParameterSpec, inputFile, encryptedFile);
+                        JOptionPane.showMessageDialog(null, "file was encrypted");
+                        Object o2 = JOptionPane.showConfirmDialog(null,"Decrypt file?", "decrypt?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
+                        System.out.println(o2);
+                        if(o2.toString().matches("0"))
+                            FileData.decryptFile(algorithm, key, ivParameterSpec, encryptedFile, decryptedFile);
+                        break;
                 }
-            } catch(IOException ex) {
+            } catch(IOException | NoSuchAlgorithmException | NoSuchPaddingException |
+                    InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException |
+                    IllegalBlockSizeException ex) {
                 System.out.println("Error: " + ex);
             }
         }

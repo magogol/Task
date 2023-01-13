@@ -1,4 +1,10 @@
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -80,5 +86,63 @@ public class FileData {
         }
 
         return destFile;
+    }
+    public static void encryptFile(String alg, SecretKey key, IvParameterSpec iv,
+                                   File input, File output) throws IOException, NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException,
+            BadPaddingException, IllegalBlockSizeException {
+
+        Cipher cipher = Cipher.getInstance(alg);
+        cipher.init(Cipher.ENCRYPT_MODE, key, iv);
+        FileInputStream inputStream = new FileInputStream(input);
+        FileOutputStream outputStream = new FileOutputStream(output);
+        byte[] buffer = new byte[64];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            byte[] out = cipher.update(buffer, 0, bytesRead);
+            if (out != null) {
+                outputStream.write(out);
+            }
+        }
+        byte[] outBytes = cipher.doFinal();
+        if (outBytes != null) {
+            outputStream.write(outBytes);
+        }
+        inputStream.close();
+        outputStream.close();
+    }
+    public static void decryptFile(String algorithm, SecretKey key, IvParameterSpec iv,
+                                   File encryptedFile, File decryptedFile) throws IOException, NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException,
+            BadPaddingException, IllegalBlockSizeException {
+        Cipher cipher = Cipher.getInstance(algorithm);
+        cipher.init(Cipher.DECRYPT_MODE, key, iv);
+        FileInputStream inputStream = new FileInputStream(encryptedFile);
+        FileOutputStream outputStream = new FileOutputStream(decryptedFile);
+        byte[] buffer = new byte[64];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            byte[] output = cipher.update(buffer, 0, bytesRead);
+            if (output != null) {
+                outputStream.write(output);
+            }
+        }
+        byte[] output = cipher.doFinal();
+        if (output != null) {
+            outputStream.write(output);
+        }
+        inputStream.close();
+        outputStream.close();
+    }
+    public static SecretKey generateKey(int n) throws NoSuchAlgorithmException {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(n);
+        SecretKey key = keyGenerator.generateKey();
+        return key;
+    }
+    public static IvParameterSpec generateIv() {
+        byte[] iv = new byte[16];
+        new SecureRandom().nextBytes(iv);
+        return new IvParameterSpec(iv);
     }
 }
